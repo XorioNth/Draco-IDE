@@ -1,0 +1,70 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "Z:\\App Development\\Draco\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A5724161-A390-4B62-B60B-0A068F6401BA}|DracoUI\\DracoUI.csproj|z:\\app development\\draco\\dracoui\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A5724161-A390-4B62-B60B-0A068F6401BA}|DracoUI\\DracoUI.csproj|solutionrelative:dracoui\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A5724161-A390-4B62-B60B-0A068F6401BA}|DracoUI\\DracoUI.csproj|z:\\app development\\draco\\dracoui\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{A5724161-A390-4B62-B60B-0A068F6401BA}|DracoUI\\DracoUI.csproj|solutionrelative:dracoui\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F698240E-D541-4BA5-AA1D-E6C5FB91DAAA}|DracoCore\\DracoCore.vcxproj|Z:\\App Development\\Draco\\DracoCore\\DracoCore.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F698240E-D541-4BA5-AA1D-E6C5FB91DAAA}|DracoCore\\DracoCore.vcxproj|solutionrelative:DracoCore\\DracoCore.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DracoCore.cpp",
+              "DocumentMoniker": "Z:\\App Development\\Draco\\DracoCore\\DracoCore.cpp",
+              "RelativeDocumentMoniker": "DracoCore\\DracoCore.cpp",
+              "ToolTip": "Z:\\App Development\\Draco\\DracoCore\\DracoCore.cpp",
+              "RelativeToolTip": "DracoCore\\DracoCore.cpp",
+              "ViewState": "AgIAAB8AAAAAAAAAAAD4vy8AAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-14T10:14:46.36Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "Z:\\App Development\\Draco\\DracoUI\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "DracoUI\\MainWindow.xaml",
+              "ToolTip": "Z:\\App Development\\Draco\\DracoUI\\MainWindow.xaml",
+              "RelativeToolTip": "DracoUI\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-02-27T17:07:21.866Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "Z:\\App Development\\Draco\\DracoUI\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "DracoUI\\MainWindow.xaml.cs",
+              "ToolTip": "Z:\\App Development\\Draco\\DracoUI\\MainWindow.xaml.cs",
+              "RelativeToolTip": "DracoUI\\MainWindow.xaml.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAcwEsAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-27T17:21:08.911Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

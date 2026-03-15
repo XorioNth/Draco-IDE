@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x64</Platforms>
+    <ApplicationIcon>Resources\DracoIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="cpp.xshd" />
+    <None Remove="Resources\BuildTab.png" />
+    <None Remove="Resources\DracoIcon.ico" />
+    <None Remove="Resources\DracoIcon.png" />
+    <None Remove="Resources\DragonForcE.ttf" />
+    <None Remove="Resources\FangTab.png" />
+    <None Remove="Resources\FileTab.png" />
+    <None Remove="Resources\HeaderDragon.png" />
+    <None Remove="Resources\Orbitron-VariableFont_wght.ttf" />
+    <None Remove="Resources\RunTab.png" />
+    <None Remove="Resources\SGr-Iosevka-Regular.ttc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="cpp.xshd" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\BuildTab.png" />
+    <Resource Include="Resources\DracoIcon.ico" />
+    <Resource Include="Resources\DracoIcon.png" />
+    <Resource Include="Resources\DragonForcE.ttf" />
+    <Resource Include="Resources\FangTab.png" />
+    <Resource Include="Resources\FileTab.png" />
+    <Resource Include="Resources\HeaderDragon.png" />
+    <Resource Include="Resources\Orbitron-VariableFont_wght.ttf" />
+    <Resource Include="Resources\RunTab.png" />
+    <Resource Include="Resources\SGr-Iosevka-Regular.ttc" />
+  </ItemGroup>
+
+</Project>
