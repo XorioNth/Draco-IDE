@@ -21,9 +21,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 namespace DracoUI;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
     [DllImport("DracoCore.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -86,39 +83,28 @@ public partial class MainWindow : Window
 
         try
         {
-            // 1. SONDA: Căutăm un N care să producă un timp de lucru solid (min 100ms)
             await Task.Run(() => {
                 while (probeTime < 100 && probeN < 100000000)
                 {
-                    probeN *= 5; // Creștem mai granular (x5 în loc de x10)
+                    probeN *= 5; 
                     probeTime = GetCpuTime(probeN);
                 }
             });
-
-            // 2. GENERARE N: Folosim N-ul găsit de sondă ca punct maxim
             var dynamicNList = generateNValues(probeTime, probeN);
-
-            // 3. MĂSURARE: Folosim filtrul de mediană pentru a curăța datele
             await Task.Run(() =>
             {
                 foreach (double nValue in dynamicNList)
                 {
                     List<double> samples = new List<double>();
-                    for (int i = 0; i < 3; i++) // Rulezi de 3 ori pentru fiecare N
+                    for (int i = 0; i < 3; i++)
                     {
                         samples.Add(GetCpuTime(nValue));
                     }
                     samples.Sort();
-
-                    // Alegem valoarea din mijloc (mediana) - cea mai stabilă
                     double cleanedTime = samples[1];
-
-                    // Evităm 0 absolut pentru a nu strica logaritmii în C++
                     timeValues.Add(Math.Max(cleanedTime, 0.001));
                 }
             });
-
-            // 4. LOG ȘI ANALIZĂ
             string rez = "Date colectate:\n";
             for (int i = 0; i < dynamicNList.Count; i++)
                 rez += $"N: {dynamicNList[i]:N0} -> T: {timeValues[i]} ms\n";
