@@ -9,7 +9,7 @@ Custom IDE for C++ development
 Dark themed IDE that compiles and runs C++ code.
 
 
-Tool for analyzing time complexity of algorithms, currently a work in progress, especially for lower time complexity algorithms, due to Operating System difficulties.
+Contains tool for analyzing the time complexity of algorithms, nicknamed Fang.
 
 
 **Interface**: C# / WPF
