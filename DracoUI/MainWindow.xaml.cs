@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private List<double> timeValues = new List<double>();
     private static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
     bool _isWorking = false;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -46,6 +47,7 @@ public partial class MainWindow : Window
             }
         }
     }
+
     private double GetCpuTime(double nValue)
     {
         ProcessStartInfo psi = new ProcessStartInfo("app.exe");
@@ -54,19 +56,22 @@ public partial class MainWindow : Window
         psi.CreateNoWindow = true;
         using (Process p = new Process { StartInfo = psi })
         {
+            Stopwatch sw = Stopwatch.StartNew();
+
             p.Start();
             p.PriorityClass = ProcessPriorityClass.High;
             p.StandardInput.WriteLine(nValue.ToString());
+            p.StandardInput.Close();
 
             if (!p.WaitForExit(3000)) { p.Kill(); return 3000; }
-
-            return p.TotalProcessorTime.TotalMilliseconds;
+            sw.Stop();
+            return sw.Elapsed.TotalMilliseconds;
         }
     }
     private List<double> generateNValues(double probeTime, double probeN)
     {
         double maxN = probeN;
-        double minN = maxN / 100;
+        double minN = maxN / 20;
         List<double> nList = new List<double>();
         double factor = Math.Pow(maxN / minN, 1.0 / 14.0);
         double currentN = minN;

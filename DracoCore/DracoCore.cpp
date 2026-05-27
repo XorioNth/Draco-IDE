@@ -2,6 +2,7 @@
 #include <string>
 #include <functional>
 #include <cmath>
+#include <algorithm>
 
 struct TimeComplexity {
     std::string name;
@@ -13,9 +14,16 @@ extern "C" {
         std::vector<double> singleValueTestCase(testVal, testVal + testValuesSize);
         std::vector<double> timeValues(timeVal, timeVal + timeValuesSize);
         size_t n = singleValueTestCase.size();
+
+        if (n < 2) return "Inconclusive";
+        double minT = *std::min_element(timeValues.begin(), timeValues.end());
+        double maxT = *std::max_element(timeValues.begin(), timeValues.end());
+        if ((maxT - minT) <= 5.0) {
+            return u8"O(1)";
+        }
+
         // Transform
         static std::vector<TimeComplexity> models = {
-            {u8"O(1)", [](double n) {return 1.0;}},
             {u8"O(logn)", [](double n) {return std::log2(n);}},
             {u8"O(n)", [](double n) {return n;}},
             {u8"O(nlogn)", [](double n) {return n * std::log2(n);}},
@@ -23,11 +31,10 @@ extern "C" {
             {u8"O(n\u00B2)", [](double n) {return n * n;}},
             {u8"O(n\u00B2\u221An)", [](double n) {return n * n * sqrt(n);}},
             {u8"O(n\u00B3)", [](double n) {return n * n * n;}}
-          //  {"O(2^n)", [](double n) {return pow(2, n);}},
-          //  {"O(n!)", [](double n) {return tgamma(n + 1);}}
         };
         TimeComplexity* best_model = nullptr;
-        double BestRsq = -1;
+        double BestRsq = -1000;
+
         for (TimeComplexity& model : models) {
             std::vector<double> xTransformed(n);
             double XM = 0, YM = 0;
@@ -44,15 +51,10 @@ extern "C" {
                 intValDown += (xTransformed[i] - XM) * (xTransformed[i] - XM);
                 SStot += (timeValues[i] - YM) * (timeValues[i] - YM);
             }
-            if (intValDown == 0) {
-                double varianceY = SStot / n;
-                if (varianceY < 1.0) {
-                    double fakeRsq = 0.0001; 
-                    if (fakeRsq > BestRsq) { BestRsq = fakeRsq; best_model = &model; }
-                }
-                continue;
-            }
+            if (intValDown < 1e-9 || SStot < 1e-9) continue;
+
             double a = intValUp / intValDown;
+            if (a <= 0) continue;
             double b = YM - a * XM;
             std::vector<double> timePrediction(n);
             for (size_t i = 0; i < n; i++)
@@ -61,7 +63,7 @@ extern "C" {
             for (size_t i = 0; i < n; i++) {
                 SSres += (timeValues[i] - timePrediction[i]) * (timeValues[i] - timePrediction[i]);
             }
-            double Rsq = 1 - (SSres / SStot);
+            double Rsq = 1.0 - (SSres / SStot);
             if (Rsq > BestRsq)
                 BestRsq = Rsq, best_model = &model;
         }
