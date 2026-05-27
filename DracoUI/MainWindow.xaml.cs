@@ -28,6 +28,8 @@ public partial class MainWindow : Window
     public ObservableCollection<ExplorerItem> ExplorerData { get; set; }
     private string currentFilePath = string.Empty;
     private List<double> timeValues = new List<double>();
+    private static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+    bool _isWorking = false;
     public MainWindow()
     {
         InitializeComponent();
@@ -77,12 +79,12 @@ public partial class MainWindow : Window
     }
     private async Task AnalyzeComplexity()
     {
-        timeValues.Clear();
-        double probeN = 10000;
-        double probeTime = 0;
-
+        await _semaphoreSlim.WaitAsync();
         try
         {
+            timeValues.Clear();
+            double probeN = 10000;
+            double probeTime = 0;
             await Task.Run(() => {
                 while (probeTime < 100 && probeN < 100000000)
                 {
@@ -119,9 +121,15 @@ public partial class MainWindow : Window
         {
             MessageBox.Show("Eroare: " + ex.Message);
         }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
     private async void FangButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_isWorking) return;
+        _isWorking = true;
         var btn = sender as Button;
         if (btn != null) btn.IsEnabled = false;
         bool isBuildSuccesful = await BuildButton();
@@ -130,6 +138,7 @@ public partial class MainWindow : Window
             await AnalyzeComplexity();
         }
         if(btn != null) btn.IsEnabled = true;
+        _isWorking = false;
     }
     private void Output_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -144,25 +153,25 @@ public partial class MainWindow : Window
     }
     private async Task<bool> BuildButton()
     {
-        if (string.IsNullOrEmpty(currentFilePath))
-        {
+        await _semaphoreSlim.WaitAsync();
+        try {
+            if (string.IsNullOrEmpty(currentFilePath))
+            {
+                OutputTabs.SelectedIndex = 0;
+                BuildOutput.Text = "[!] Error: No file selected. Please open or save a file first.";
+                return false;
+            }
+            string extension = System.IO.Path.GetExtension(currentFilePath).ToLower();
+            if (extension == ".h" || extension == ".hpp")
+            {
+                OutputTabs.SelectedIndex = 0;
+                BuildOutput.Text = "[!] Error: Header files (.h) cannot be compiled directly.\n" +
+                                   "Please select the .cpp file that includes this header to build.";
+                return false;
+            }
             OutputTabs.SelectedIndex = 0;
-            BuildOutput.Text = "[!] Error: No file selected. Please open or save a file first.";
-            return false;
-        }
-        string extension = System.IO.Path.GetExtension(currentFilePath).ToLower();
-        if (extension == ".h" || extension == ".hpp")
-        {
-            OutputTabs.SelectedIndex = 0; 
-            BuildOutput.Text = "[!] Error: Header files (.h) cannot be compiled directly.\n" +
-                               "Please select the .cpp file that includes this header to build.";
-            return false;
-        }
-        OutputTabs.SelectedIndex = 0; 
-        BuildOutput.Text = "Forging code... 🔨\n";
-        string fileToCompile = string.IsNullOrEmpty(currentFilePath) ? "temp.cpp" : currentFilePath;
-        try { 
-
+            BuildOutput.Text = "Forging code... 🔨\n";
+            string fileToCompile = string.IsNullOrEmpty(currentFilePath) ? "temp.cpp" : currentFilePath;
             File.WriteAllText(fileToCompile, CodeEditor.Text);
 
             ProcessStartInfo si = new ProcessStartInfo
@@ -201,10 +210,17 @@ public partial class MainWindow : Window
             BuildOutput.Text += "SYSTEM ERROR: " + ex.Message;
             return false;
         }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
     private async void BuildButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_isWorking) return;
+        _isWorking = true;
         await BuildButton();
+        _isWorking = false;
     }
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
@@ -257,22 +273,33 @@ public partial class MainWindow : Window
     }
     private async void Window_KeyDown(object sender, KeyEventArgs e)
     {
+        if(_isWorking && (e.Key == Key.F5 || e.Key == Key.F8 || e.Key == Key.F9))
+        {
+            e.Handled = true;
+            return;
+        }
         switch (e.Key)
         {
-            case Key.F8:
-                e.Handled = true;
-                await BuildButton();
-                break;
             case Key.F5:
                 e.Handled = true;
+                _isWorking = true;
+                await BuildButton();
+                _isWorking = false;
+                break;
+            case Key.F8:
+                e.Handled = true;
+                _isWorking = true;
                 await RunProgram();
+                _isWorking = false;
                 break;
             case Key.F9:
                 e.Handled = true;
+                _isWorking = true;
                 if (await BuildButton())
                 {
                     await RunProgram();
                 }
+                _isWorking = false;
                 break;
         }
         if (Keyboard.Modifiers == ModifierKeys.Control)
@@ -320,49 +347,70 @@ public partial class MainWindow : Window
     }
     private async Task RunProgram()
     {
-        if (!string.IsNullOrEmpty(currentFilePath))
+        await _semaphoreSlim.WaitAsync();
+        try
         {
-            File.WriteAllText(currentFilePath, CodeEditor.Text);
+            if (!string.IsNullOrEmpty(currentFilePath))
+            {
+                File.WriteAllText(currentFilePath, CodeEditor.Text);
+            }
+            string extension = System.IO.Path.GetExtension(currentFilePath).ToLower();
+            if (extension == ".h" || extension == ".hpp")
+            {
+                OutputTabs.SelectedIndex = 1;
+                TerminalOutput.Text = "[!] Error: Cannot run a header file directly.";
+                return;
+            }
+            string? projectDirectory = System.IO.Path.GetDirectoryName(currentFilePath);
+            string fullExePath = System.IO.Path.Combine(projectDirectory ?? "", "app.exe");
+            if (!File.Exists("app.exe"))
+            {
+                OutputTabs.SelectedIndex = 0;
+                BuildOutput.Text += "\n[Error] No executable found. Build first!";
+                return;
+            }
+
+            OutputTabs.SelectedIndex = 1;
+            TerminalOutput.Clear();
+            TerminalOutput.Text = "--- Running ---\n";
+
+            using (Process runProcess = new Process())
+            {
+                runProcess.StartInfo.FileName = "app.exe";
+                runProcess.StartInfo.WorkingDirectory = projectDirectory;
+                runProcess.StartInfo.RedirectStandardOutput = true;
+                runProcess.StartInfo.UseShellExecute = false;
+                runProcess.StartInfo.CreateNoWindow = false;
+                runProcess.Start();
+
+                var readTask = runProcess.StandardOutput.ReadToEndAsync();
+                var waitTask = runProcess.WaitForExitAsync();
+                if(await Task.WhenAny(waitTask, Task.Delay(30000)) != waitTask)
+                {
+                    runProcess.Kill();
+                    await readTask;
+                    TerminalOutput.Text += "\n[!] Process killed (Timeout 30s). No Input received";
+                }
+                else
+                {
+                    string result = await readTask;
+                    TerminalOutput.Text += result;
+                    TerminalOutput.Text += "\n\n--- Process finished with code " + runProcess.ExitCode + " ---";
+
+                }
+            }
         }
-        string extension = System.IO.Path.GetExtension(currentFilePath).ToLower();
-        if (extension == ".h" || extension == ".hpp")
+        finally
         {
-            OutputTabs.SelectedIndex = 1; 
-            TerminalOutput.Text = "[!] Error: Cannot run a header file directly.";
-            return;
-        }
-        string? projectDirectory = System.IO.Path.GetDirectoryName(currentFilePath);
-        string fullExePath = System.IO.Path.Combine(projectDirectory ?? "", "app.exe");
-        if (!File.Exists("app.exe"))
-        {
-            OutputTabs.SelectedIndex = 0;
-            BuildOutput.Text += "\n[Error] No executable found. Build first!";
-            return;
-        }
-
-        OutputTabs.SelectedIndex = 1; 
-        TerminalOutput.Clear();
-        TerminalOutput.Text = "--- Running ---\n";
-
-        using (Process runProcess = new Process())
-        {
-            runProcess.StartInfo.FileName = "app.exe";
-            runProcess.StartInfo.WorkingDirectory = projectDirectory;
-            runProcess.StartInfo.RedirectStandardOutput = true;
-            runProcess.StartInfo.UseShellExecute = false;
-            runProcess.StartInfo.CreateNoWindow = false;
-            runProcess.Start();
-
-            string result = await runProcess.StandardOutput.ReadToEndAsync();
-            await runProcess.WaitForExitAsync();
-
-            TerminalOutput.Text += result;
-            TerminalOutput.Text += "\n\n--- Process finished with code " + runProcess.ExitCode + " ---";
+            _semaphoreSlim.Release();
         }
     }
     private async void RunButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_isWorking) return;
+        _isWorking = true;
         await RunProgram();
+        _isWorking = false;
     }
     private bool AddFileToTree(ObservableCollection<ExplorerItem> list, string targetDirPath, ExplorerItem newFile)
     {
