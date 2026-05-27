@@ -18,19 +18,20 @@ extern "C" {
         if (n < 2) return "Inconclusive";
         double minT = *std::min_element(timeValues.begin(), timeValues.end());
         double maxT = *std::max_element(timeValues.begin(), timeValues.end());
-        if ((maxT - minT) <= 5.0) {
+        if ((maxT - minT) <= 3.0) {
             return u8"O(1)";
         }
 
         // Transform
         static std::vector<TimeComplexity> models = {
             {u8"O(logn)", [](double n) {return std::log2(n);}},
+            {u8"O(\u221An)", [](double n) {return std::sqrt(n);}},
             {u8"O(n)", [](double n) {return n;}},
             {u8"O(nlogn)", [](double n) {return n * std::log2(n);}},
             {u8"O(n\u221An)", [](double n) {return n * sqrt(n);}},
             {u8"O(n\u00B2)", [](double n) {return n * n;}},
             {u8"O(n\u00B2\u221An)", [](double n) {return n * n * sqrt(n);}},
-            {u8"O(n\u00B3)", [](double n) {return n * n * n;}}
+            {u8"O(n\u00B3)", [](double n) {return n * n * n;}},
         };
         TimeComplexity* best_model = nullptr;
         double BestRsq = -1000;

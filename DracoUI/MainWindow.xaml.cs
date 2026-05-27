@@ -19,6 +19,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Linq;
 namespace DracoUI;
 
 public partial class MainWindow : Window
@@ -71,7 +72,7 @@ public partial class MainWindow : Window
     private List<double> generateNValues(double probeTime, double probeN)
     {
         double maxN = probeN;
-        double minN = maxN / 20;
+        double minN = maxN / 10;
         List<double> nList = new List<double>();
         double factor = Math.Pow(maxN / minN, 1.0 / 14.0);
         double currentN = minN;
@@ -87,14 +88,17 @@ public partial class MainWindow : Window
         await _semaphoreSlim.WaitAsync();
         try
         {
+            /* For testing purposes, getting the N values + the time
             timeValues.Clear();
-            double probeN = 10000;
+            double probeN = 10;
             double probeTime = 0;
             await Task.Run(() => {
-                while (probeTime < 100 && probeN < 100000000)
+                while (probeN < 100000000)
                 {
-                    probeN *= 5; 
                     probeTime = GetCpuTime(probeN);
+                    if (probeTime >= 200)
+                        break;
+                    probeN *= 2;
                 }
             });
             var dynamicNList = generateNValues(probeTime, probeN);
@@ -112,7 +116,7 @@ public partial class MainWindow : Window
                     timeValues.Add(Math.Max(cleanedTime, 0.001));
                 }
             });
-            string rez = "Date colectate:\n";
+            string rez = "Data:\n";
             for (int i = 0; i < dynamicNList.Count; i++)
                 rez += $"N: {dynamicNList[i]:N0} -> T: {timeValues[i]} ms\n";
 
@@ -120,7 +124,54 @@ public partial class MainWindow : Window
 
             IntPtr ptr = SingleValueTimeComplexity(dynamicNList.ToArray(), dynamicNList.Count, timeValues.ToArray(), timeValues.Count);
             string? result = Marshal.PtrToStringUTF8(ptr);
-            MessageBox.Show($"Verdict Draco: {result}");
+            MessageBox.Show($"Predicted Time Complexity: {result}");
+            */
+            int runs = 5;
+            List<string> votes = new List<string>();
+
+            OutputTabs.SelectedIndex = 0;
+            BuildOutput.Text += $"\n[Draco Profiler] Starting {runs} analysis iterations...\n";
+            for (int r = 1; r <= runs; r++)
+            {
+                timeValues.Clear();
+                double probeN = 10;
+                double probeTime = 0;
+                await Task.Run(() =>
+                {
+                    while (probeN < 100000000)
+                    {
+                        probeTime = GetCpuTime(probeN);
+                        if (probeTime >= 200)
+                            break;
+                        probeN *= 2;
+                    }
+                });
+                var dynamicNList = generateNValues(probeTime, probeN);
+                await Task.Run(() =>
+                {
+                    foreach (double nValue in dynamicNList)
+                    {
+                        List<double> samples = new List<double>();
+                        for (int i = 0; i < 3; i++)
+                        {
+                            samples.Add(GetCpuTime(nValue));
+                        }
+                        samples.Sort();
+                        double cleanedTime = samples[1];
+                        timeValues.Add(Math.Max(cleanedTime, 0.001));
+                    }
+                });
+                IntPtr ptr = SingleValueTimeComplexity(dynamicNList.ToArray(), dynamicNList.Count, timeValues.ToArray(), timeValues.Count);
+                string result = Marshal.PtrToStringUTF8(ptr) ?? "Inconclusive";
+                votes.Add(result);
+                BuildOutput.Text += $"Run {r}/{runs}: {result}\n";
+            }
+            string finalVerdict = votes.GroupBy(v => v).OrderByDescending(g => g.Count()).First().Key;
+            string allVotesStr = string.Join(", ", votes);
+            BuildOutput.Text += $"---------------------------------\n";
+            BuildOutput.Text += $"FINAL VERDICT: {finalVerdict}\n";
+
+            MessageBox.Show($"Predicted Time Complexity: {finalVerdict}\n\nVotes cast: [{allVotesStr}]", "Draco Analysis Complete");
         }
         catch (Exception ex)
         {
@@ -276,6 +327,17 @@ public partial class MainWindow : Window
     {
         FileOptions.IsOpen = true;
     }
+    private void InjectBenchmarkLoop()
+    {
+        if(CodeEditor.SelectionLength > 0)
+        {
+            string selectedText = CodeEditor.SelectedText;
+            string indent = new string(selectedText.TakeWhile(c => c == ' ' || c == '\t').ToArray());
+            string wrappedCode = $"long long dummy = 0;\nfor(int iter = 0; iter < 5000000; iter++) {{\n{selectedText}\n{indent}dummy ^= iter;\n}}";
+
+            CodeEditor.Document.Replace(CodeEditor.SelectionStart, CodeEditor.SelectionLength, wrappedCode);
+        }
+    }
     private async void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if(_isWorking && (e.Key == Key.F5 || e.Key == Key.F8 || e.Key == Key.F9))
@@ -333,6 +395,12 @@ public partial class MainWindow : Window
             {
                 e.Handled = true;
                 CloseEditor();
+            }
+            // CTRL + M (Code Injection For Time Analysis)
+            else if(e.Key == Key.M)
+            {
+                e.Handled = true;
+                InjectBenchmarkLoop();
             }
         }
         else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))

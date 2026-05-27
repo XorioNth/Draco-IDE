@@ -1,18 +1,15 @@
-#include<fstream>
-#include<iostream>
-#include<cmath>
+#include <iostream>
+#include <algorithm>
+#include <vector>
 using namespace std;
-ifstream fin("date.txt");
-int main(){
-    int n, sum = 0, x;
+vector<int> arr;
+int main() {
+    int n, sum = 0;
     cin >> n;
-    x = n;
-    for(int i = 0; i < x; i++)
-       while(n > 0) {
-        n /= 2;
-       }
-   //  for(int j = 0; j * j < n; j++)
-
-    cout << sum;
+    for(int i = 0; i < n; i++) {
+       arr.push_back((7 * i) + 15);
+       sum++;
+    }
+    sort(arr.begin(), arr.end());
     return 0;
 }
